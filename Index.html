@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message For You</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Lato:wght@300&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    min-height:100vh;
+    background:linear-gradient(135deg,#fce4ec 0%,#f8bbd0 30%,#ffd7e8 60%,#ffe0b2 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:'Cormorant Garamond',serif;
+    overflow-x:hidden;overflow-y:auto;position:relative;
+  }
+
+  .blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:0.45;pointer-events:none;animation:drift 10s ease-in-out infinite alternate;}
+  .blob1{width:420px;height:420px;background:#f48fb1;top:-100px;left:-100px;animation-delay:0s;}
+  .blob2{width:320px;height:320px;background:#ffccbc;bottom:-80px;right:-80px;animation-delay:3s;}
+  .blob3{width:260px;height:260px;background:#f8bbd0;top:40%;left:60%;animation-delay:6s;}
+  @keyframes drift{from{transform:translate(0,0) scale(1);}to{transform:translate(30px,20px) scale(1.06);}}
+
+  .hearts-container{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+  .heart{position:absolute;bottom:-60px;font-size:1.4rem;opacity:0;animation:floatUp linear infinite;}
+  @keyframes floatUp{
+    0%{transform:translateY(0) scale(0.8) rotate(-10deg);opacity:0;}
+    10%{opacity:0.7;}90%{opacity:0.4;}
+    100%{transform:translateY(-110vh) scale(1.2) rotate(10deg);opacity:0;}
+  }
+
+  /* ── Single scrollable card ── */
+  .card{
+    position:relative;z-index:10;text-align:center;
+    padding:3.5rem 3rem;
+    background:rgba(255,255,255,0.55);
+    backdrop-filter:blur(18px);
+    border-radius:32px;
+    border:1px solid rgba(255,255,255,0.8);
+    box-shadow:0 12px 60px rgba(194,24,91,0.12),0 2px 12px rgba(194,24,91,0.08);
+    max-width:480px;width:90vw;
+    margin:2rem auto;
+    animation:cardIn 1.4s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  @keyframes cardIn{
+    from{opacity:0;transform:translateY(40px) scale(0.96);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  /* ── Divider between sections ── */
+  .divider{
+    display:flex;align-items:center;gap:0.8rem;
+    margin:2rem 0;
+  }
+  .divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(244,167,185,0.5),transparent);}
+  .divider-heart{font-size:1rem;color:#f48fb1;}
+
+  /* ── Section 1 ── */
+  .big-heart{font-size:3.5rem;display:block;margin-bottom:1.2rem;animation:heartbeat 1.8s ease-in-out infinite;}
+  @keyframes heartbeat{
+    0%,100%{transform:scale(1);}14%{transform:scale(1.18);}
+    28%{transform:scale(1);}42%{transform:scale(1.12);}56%{transform:scale(1);}
+  }
+
+  .main-text{
+    font-size:clamp(1.6rem,5vw,2.2rem);font-weight:300;font-style:italic;
+    color:#ad1457;line-height:1.5;letter-spacing:0.02em;
+    margin-bottom:0.6rem;animation:fadeUp 1.6s 0.4s both;
+  }
+  .sub-text{
+    font-size:1rem;font-family:'Lato',sans-serif;font-weight:300;
+    color:#e91e8c99;letter-spacing:0.18em;text-transform:uppercase;
+    margin-bottom:2rem;animation:fadeUp 1.6s 0.7s both;
+  }
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(16px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ── Player ── */
+  .player{
+    animation:fadeUp 1.6s 1s both;
+    background:rgba(255,255,255,0.7);
+    border-radius:20px;padding:1rem 1.4rem;
+    border:1px solid rgba(244,167,185,0.4);
+    margin-bottom:1.2rem;
+  }
+  .player-label{font-family:'Lato',sans-serif;font-size:0.7rem;letter-spacing:0.2em;color:#c2185b99;text-transform:uppercase;margin-bottom:0.7rem;}
+  .player-controls{display:flex;align-items:center;gap:1rem;justify-content:center;}
+  .play-btn{
+    width:48px;height:48px;border-radius:50%;
+    background:linear-gradient(135deg,#f48fb1,#c2185b);
+    border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(194,24,91,0.3);
+    transition:transform 0.2s,box-shadow 0.2s;flex-shrink:0;
+  }
+  .play-btn:hover{transform:scale(1.08);box-shadow:0 6px 22px rgba(194,24,91,0.4);}
+  .play-btn svg{width:20px;height:20px;fill:white;margin-left:2px;}
+  .play-btn.playing svg.play-icon{display:none;}
+  .play-btn:not(.playing) svg.pause-icon{display:none;}
+  .song-info{text-align:left;}
+  .song-title{font-family:'Cormorant Garamond',serif;font-size:0.95rem;color:#ad1457;font-style:italic;}
+  .song-sub{font-family:'Lato',sans-serif;font-size:0.68rem;color:#e91e8c88;letter-spacing:0.1em;}
+  .progress-wrap{margin-top:0.8rem;display:flex;align-items:center;gap:0.6rem;}
+  .progress-bar{flex:1;height:3px;background:rgba(194,24,91,0.15);border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#f48fb1,#c2185b);border-radius:2px;transition:width 0.5s linear;}
+  .time-label{font-family:'Lato',sans-serif;font-size:0.65rem;color:#c2185b88;min-width:28px;text-align:right;}
+
+  .az-text{font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;color:#c2185b88;letter-spacing:0.05em;margin-bottom:0.4rem;}
+  .note{font-family:'Lato',sans-serif;font-size:0.65rem;color:#e91e8c55;letter-spacing:0.1em;}
+
+  /* ── Section 2 ── */
+  .p2-heart{font-size:2.5rem;display:block;margin-bottom:1.2rem;animation:heartbeat 1.8s ease-in-out infinite;}
+
+  .quote-block{
+    background:rgba(255,255,255,0.6);
+    border-left:3px solid #f48fb1;
+    border-radius:0 16px 16px 0;
+    padding:1.2rem 1.4rem;
+    margin-bottom:1.2rem;
+    text-align:left;
+  }
+  .quote-en{
+    font-size:1.15rem;font-style:italic;font-weight:300;
+    color:#ad1457;line-height:1.6;margin-bottom:0.5rem;
+  }
+  .quote-label{
+    font-family:'Lato',sans-serif;font-size:0.65rem;
+    letter-spacing:0.15em;text-transform:uppercase;color:#e91e8c66;
+  }
+
+  .az-block{
+    background:rgba(255,255,255,0.6);
+    border-radius:16px;padding:1.2rem 1.4rem;
+    border:1px solid rgba(244,167,185,0.4);
+    margin-bottom:1.2rem;
+  }
+  .az-big{
+    font-size:1.35rem;font-style:italic;font-weight:300;
+    color:#ad1457;letter-spacing:0.03em;margin-bottom:0.3rem;
+  }
+  .az-translation{
+    font-family:'Lato',sans-serif;font-size:0.72rem;
+    letter-spacing:0.12em;color:#c2185b88;text-transform:uppercase;
+  }
+
+  .closing{
+    font-family:'Lato',sans-serif;font-size:0.72rem;
+    color:#e91e8c88;line-height:1.8;letter-spacing:0.05em;
+  }
+
+  /* ── Tap overlay ── */
+  .tap-overlay{
+    position:fixed;inset:0;z-index:999;
+    background:rgba(252,228,236,0.92);
+    backdrop-filter:blur(6px);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    cursor:pointer;transition:opacity 0.6s;
+  }
+  .tap-overlay.hidden{opacity:0;pointer-events:none;}
+  .tap-heart{font-size:4rem;animation:heartbeat 1.8s ease-in-out infinite;margin-bottom:1rem;}
+  .tap-msg{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;color:#ad1457;margin-bottom:0.4rem;}
+  .tap-sub{font-family:'Lato',sans-serif;font-size:0.75rem;letter-spacing:0.2em;color:#c2185b88;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<div class="tap-overlay" id="tapOverlay" onclick="unlockAudio()">
+  <div class="tap-heart">💗</div>
+  <div class="tap-msg">A message for you</div>
+  <div class="tap-sub">tap anywhere to open ♡</div>
+</div>
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+<div class="hearts-container" id="hearts"></div>
+
+<div class="card">
+
+  <!-- ── Section 1 ── -->
+  <span class="big-heart">💗</span>
+  <p class="main-text">"You are not alone,<br>I stay with you."</p>
+  <p class="sub-text">always &amp; forever</p>
+
+  <div class="player">
+    <div class="player-label">🎹 Azerbaijani Love Melody</div>
+    <div class="player-controls">
+      <button class="play-btn playing" id="playBtn" onclick="togglePlay()">
+        <svg class="play-icon"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <div class="song-info">
+        <div class="song-title">Sevgi Nəğməsi — Love Song</div>
+        <div class="song-sub">Azerbaijani Mugham &bull; Romantic &bull; Soul</div>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="time-label" id="timeLabel">0:00</div>
+    </div>
+  </div>
+
+  <p class="az-text">"Sən tək deyilsən, mən həmişə səninləyəm."</p>
+  <p class="note">♡ you are not alone, i stay with you ♡</p>
+
+  <!-- ── Divider ── -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-heart">💗</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- ── Section 2 ── -->
+  <span class="p2-heart">💛</span>
+
+  <div class="quote-block">
+    <p class="quote-en">"I chose you on good days. I choose you even more on hard days."</p>
+    <p class="quote-label">♡ from Franky, to Fatosh</p>
+  </div>
+
+  <div class="az-block">
+    <p class="az-big">"Sən mənim hər şeyimisən."</p>
+  </div>
+
+  <p class="closing">
+    No matter the distance, no matter the silence —<br>
+    my heart is always turned towards you. 💗
+  </p>
+
+</div>
+
+<script>
+// ── Floating hearts ───────────────────────────────────────────
+const heartsEl = document.getElementById('hearts');
+const heartChars = ['💗','💓','💕','💖','🌸','💝','✨'];
+function spawnHeart() {
+  const h = document.createElement('span');
+  h.className = 'heart';
+  h.textContent = heartChars[Math.floor(Math.random() * heartChars.length)];
+  h.style.left = Math.random() * 100 + 'vw';
+  const dur = 7 + Math.random() * 8;
+  h.style.animationDuration = dur + 's';
+  h.style.animationDelay = Math.random() * 3 + 's';
+  h.style.fontSize = (0.9 + Math.random() * 1.2) + 'rem';
+  heartsEl.appendChild(h);
+  setTimeout(() => h.remove(), (dur + 3) * 1000);
+}
+for (let i = 0; i < 12; i++) setTimeout(spawnHeart, i * 600);
+setInterval(spawnHeart, 1800);
+
+// ── Azerbaijani Mugham piano ──────────────────────────────────
+const melody = [
+  {n:'D4',d:0.8},{n:'F4',d:0.5},{n:'G4',d:0.6},{n:'Ab4',d:0.5},
+  {n:'G4',d:0.5},{n:'F4',d:0.4},{n:'Eb4',d:1.0},
+  {n:'F4',d:0.6},{n:'G4',d:0.5},{n:'Bb4',d:0.6},{n:'C5',d:0.5},
+  {n:'Bb4',d:0.6},{n:'Ab4',d:0.4},{n:'G4',d:1.0},
+  {n:'G4',d:0.5},{n:'F4',d:0.4},{n:'Eb4',d:0.5},{n:'D4',d:0.5},
+  {n:'Eb4',d:0.6},{n:'F4',d:0.5},{n:'G4',d:0.9},
+  {n:'D5',d:0.7},{n:'C5',d:0.5},{n:'Bb4',d:0.5},{n:'Ab4',d:0.5},
+  {n:'G4',d:0.6},{n:'Ab4',d:0.4},{n:'Bb4',d:0.5},{n:'G4',d:0.8},
+  {n:'F4',d:0.6},{n:'G4',d:0.5},{n:'Ab4',d:0.6},{n:'G4',d:0.4},
+  {n:'F4',d:0.5},{n:'Eb4',d:0.5},{n:'D4',d:1.1},
+  {n:'Eb4',d:0.5},{n:'F4',d:0.4},{n:'G4',d:0.6},{n:'F4',d:0.4},
+  {n:'Eb4',d:0.5},{n:'D4',d:0.5},{n:'Eb4',d:0.4},{n:'F4',d:0.4},{n:'D4',d:1.4},
+  {n:'G4',d:0.6},{n:'F4',d:0.4},{n:'Eb4',d:0.5},{n:'D4',d:0.5},
+  {n:'F4',d:0.6},{n:'G4',d:0.5},{n:'Ab4',d:0.5},{n:'G4',d:1.2},
+  {n:'F4',d:0.5},{n:'Eb4',d:0.4},{n:'D4',d:0.6},{n:'Eb4',d:0.4},
+  {n:'F4',d:0.5},{n:'D4',d:1.8},
+];
+
+const freqMap = {
+  'D2':73.42,'D3':146.83,'A2':110.0,
+  'D4':293.66,'Eb4':311.13,'F4':349.23,'G4':392.00,
+  'Ab4':415.30,'Bb4':466.16,'C5':523.25,'D5':587.33,
+};
+
+const TOTAL_DUR = melody.reduce((s,n) => s+n.d+0.07, 0);
+let audioCtx=null,playing=false,intervalId=null;
+let loopTimeout=null,startTime=0,elapsed=0;
+
+function playNote(ctx,freq,time,dur,vol=0.15) {
+  const osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.type='triangle';osc.frequency.value=freq;
+  gain.gain.setValueAtTime(0,time);
+  gain.gain.linearRampToValueAtTime(vol,time+0.03);
+  gain.gain.exponentialRampToValueAtTime(vol*0.6,time+dur*0.4);
+  gain.gain.exponentialRampToValueAtTime(0.0001,time+dur+0.1);
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.start(time);osc.stop(time+dur+0.15);
+  const o2=ctx.createOscillator(),g2=ctx.createGain();
+  o2.type='sine';o2.frequency.value=freq*2.003;
+  g2.gain.setValueAtTime(0,time);
+  g2.gain.linearRampToValueAtTime(vol*0.22,time+0.03);
+  g2.gain.exponentialRampToValueAtTime(0.0001,time+dur*0.65);
+  o2.connect(g2);g2.connect(ctx.destination);
+  o2.start(time);o2.stop(time+dur);
+}
+
+function playDrone(ctx,time,dur) {
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='sine';o.frequency.value=freqMap['D2'];
+  g.gain.setValueAtTime(0.04,time);g.gain.setValueAtTime(0.04,time+dur-0.3);
+  g.gain.linearRampToValueAtTime(0,time+dur);
+  o.connect(g);g.connect(ctx.destination);o.start(time);o.stop(time+dur);
+  const o2=ctx.createOscillator(),g2=ctx.createGain();
+  o2.type='sine';o2.frequency.value=freqMap['A2'];
+  g2.gain.setValueAtTime(0.025,time);g2.gain.setValueAtTime(0.025,time+dur-0.3);
+  g2.gain.linearRampToValueAtTime(0,time+dur);
+  o2.connect(g2);g2.connect(ctx.destination);o2.start(time);o2.stop(time+dur);
+}
+
+function scheduleMelody(ctx,startAt) {
+  let t=startAt;
+  playDrone(ctx,startAt,TOTAL_DUR);
+  melody.forEach((n,i) => {
+    playNote(ctx,freqMap[n.n],t,n.d);
+    if(i%4===0){
+      const b=ctx.createOscillator(),bg=ctx.createGain();
+      b.type='sine';b.frequency.value=freqMap['D3'];
+      bg.gain.setValueAtTime(0,t);bg.gain.linearRampToValueAtTime(0.05,t+0.05);
+      bg.gain.exponentialRampToValueAtTime(0.0001,t+n.d+0.3);
+      b.connect(bg);bg.connect(ctx.destination);b.start(t);b.stop(t+n.d+0.4);
+    }
+    t+=n.d+0.07;
+  });
+  return t;
+}
+
+function startLoop(ctx) {
+  let next=ctx.currentTime;
+  function go(){
+    const end=scheduleMelody(ctx,next);
+    next=end;
+    loopTimeout=setTimeout(go,(end-ctx.currentTime-0.15)*1000);
+  }
+  go();
+}
+
+function updateProgress() {
+  if(!playing||!audioCtx) return;
+  const pos=(audioCtx.currentTime-startTime)%TOTAL_DUR;
+  document.getElementById('progressFill').style.width=(pos/TOTAL_DUR*100)+'%';
+  const s=Math.floor(pos),m=Math.floor(s/60);
+  document.getElementById('timeLabel').textContent=m+':'+String(s%60).padStart(2,'0');
+}
+
+function startMusic() {
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  startTime=audioCtx.currentTime-elapsed;
+  startLoop(audioCtx);
+  playing=true;
+  document.getElementById('playBtn').classList.add('playing');
+  intervalId=setInterval(updateProgress,500);
+}
+
+function togglePlay() {
+  if(!playing){
+    startMusic();
+  } else {
+    if(loopTimeout) clearTimeout(loopTimeout);
+    clearInterval(intervalId);
+    elapsed=audioCtx?audioCtx.currentTime-startTime:0;
+    if(audioCtx) audioCtx.suspend();
+    playing=false;
+    document.getElementById('playBtn').classList.remove('playing');
+  }
+}
+
+function unlockAudio() {
+  const overlay=document.getElementById('tapOverlay');
+  overlay.classList.add('hidden');
+  setTimeout(()=>overlay.style.display='none',700);
+  startMusic();
+}
+</script>
+</body>
+</html>
